@@ -1,0 +1,21 @@
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: some_cookie_name
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      name: John Smith
+      password: $2b$12$8TqZMN3vX8.UcyfMMtN7uuU1xdDup29HGarnjobzutYrhgh6RuOUC
+    lsn:
+      email: 49121953@qq.com
+      name: Shunan Lu
+      password: $2b$12$ZWl2ud9xO0SX69LOr8356OTzDQ1rheI21CWdbdASoc1iSm8IYDjQi
+    rbriggs:
+      email: rbriggs@gmail.com
+      name: Rebecca Briggs
+      password: $2b$12$oazXkLFD1O0ro9N.uKoOguc7axPhIblqNL82ypTdWcK008XN58pBC
+preauthorized:
+  emails:
+  - melsby@gmail.com
