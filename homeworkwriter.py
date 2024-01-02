@@ -204,7 +204,7 @@ def run():
                                 if content != None:
                                     messages.append(content)
                                     full_reply_content = ''.join([m for m in messages])
-                                    # GPT_response.markdown(f"🤖: {full_reply_content}")
+                                    GPT_response.markdown(f"🤖: {full_reply_content}")
 
                             st.session_state['sectionsList'].append(full_reply_content)                       
                 st.session_state['finished'] = True
@@ -251,7 +251,7 @@ def run():
                             if content != None:
                                 messages.append(content)
                                 full_reply_content = ''.join([m for m in messages])
-                                GPT_response.markdown(f"🤖: {full_reply_content}")
+                                # GPT_response.markdown(f"🤖: {full_reply_content}")
                         # jsonstring=full_reply_content.replace('```json','')
                         st.write(full_reply_content)
                         st.session_state['OutlineObj'] = json.loads(full_reply_content)
