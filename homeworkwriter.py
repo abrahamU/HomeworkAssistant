@@ -211,7 +211,7 @@ def run():
                 st.rerun()
             
             else:
-                with st.spinner("正在分析大纲内容，请稍候..."):
+                with st.spinner("正在分析大纲内容，该步骤需要30秒以上，请耐心等待..."):
                     messages = []
                     GPT_response = st.empty()
 
