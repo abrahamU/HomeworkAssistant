@@ -3,6 +3,8 @@ import json
 import openai
 from datetime import datetime
 from openai import OpenAI
+import pypandoc
+from io import BytesIO
 
 def run():
     # 设置 API 端点和 OpenAI API 密钥
@@ -20,21 +22,24 @@ def run():
 
     # 设置标题
     st.title('管理硕士作业写作助手')
-    st.subheader('此助手可以根据你的撰写范围方向及写作纲要作业要求，生成5000字以内的作业（包含题目·正文·参考文献）')
-    st.subheader('请你根据你的作业需求填写一下作业要求，填写的比较详细生成内容越符合作业要求')
+    st.subheader('此助手可以根据你的作业撰写范围及方向，生成5000字以下的文字内容（包括题目、正文、参考文献）')
+    st.subheader('目前该助手不可以做定量模型数据，生成都是文字形式')
+    st.subheader('请根据作业需求填写以下内容，填写越详细，生成内容越符合要求')
 
 
     # 为用户提供输入框
-    st.markdown('##### 1.请输入你的作业题目，或者输入你的作业写作方向，我帮你你生成作业题目（此处描绘的要清楚·必须填写）📜')
+    st.markdown('##### 请输入你的作业题目；或者输入你的作业写作方向，我帮你生成作业题目（必须填写）📜')
     title = st.text_input('作业题目')
-    st.markdown('##### 作业语言要求 中文 英文 （必填）')
+    st.markdown('##### 作业语言要求（必填）')
     language = st.selectbox('作业语言',["中文","English"])
     st.markdown('##### 作业字数要求（必填）')
     counts = st.text_input('作业字数')
-    st.markdown('##### 作业章节要求，第一章节xxxx，第二章节xxxx等 （若作业没有相关要求可以不添），我帮你生成章节')
+    st.markdown('##### 作业章节要求：“第一章节.....;第二章节.....”，若作业没有相关要求，则可以不填写，我帮你生成章节')
     angle_and_conclusion = st.text_area('章节介绍（可选）')
-    st.markdown('##### 作业其他要求，在这里输入（如果没有可以不添）')
+    st.markdown('##### 作业其他要求，在这里输入（如果没有可以不填）')
     additional_info = st.text_area('其他要求（可选）')
+
+    st.subheader('PS:由于模型的脱敏处理，参考文献并不一定为真，作业要求比较严格的时候，请自行添加参考文献')
 
     # 提供一个按钮，点击后生成大纲
     if st.button('生成文章'):
@@ -66,7 +71,8 @@ def run():
                 - 引言 // 必须要有，对全文做一个总结性的说明
                 - 3-4个章节 // 取决于[写作任务]
                 - 结论 // 必须要有，对全文的结论做一个说明
-                - 参考文献 // 按照学术要求输出5篇与主题相关的参考文献，**参考文献必须真实有效，并有权威的来源**，比如google scholars或者百度文献
+                - 参考文献 // 从你的认知中，输出不少于六个参考文献，其中至少有四个是中文文献，
+                - 参考文献 // 参考必须真实有效，并有权威的来源
             """
             # test = f"鲁迅和周树人的关系"
             with st.spinner("正在生成大纲，请稍候..."):
@@ -93,8 +99,8 @@ def run():
         #st.write(st.session_state['Outline'])
         if st.session_state['finished']:
             st.write(st.session_state['Outline'])
-            st.write(st.session_state['OutlineObj'])
-            st.write(st.session_state['sectionsList'])
+            # st.write(st.session_state['OutlineObj'])
+            # st.write(st.session_state['sectionsList'])
 
             chat_text = ""
             chat_text += f"# {st.session_state['OutlineObj']['title']} \n"
@@ -103,7 +109,7 @@ def run():
 
             while i < len(sectionsList):
                 chat_text += f"## {st.session_state['OutlineObj']['sections'][i]} \n"
-                chat_text += f"{sectionsList[i]}\n"
+                chat_text += f"{sectionsList[i]}\n\n"
                 i = i+1
             
             references = st.session_state['OutlineObj']['references']
@@ -113,20 +119,40 @@ def run():
             while j < len(references):
                 chat_text += f"{j+1}. {st.session_state['OutlineObj']['references'][j]} \n"
                 j = j+1
-                    
+
+            st.write(chat_text)
+
+            # 使用Pypandoc转换Markdown内容为docx格式
+            converted_file = pypandoc.convert_text(
+                chat_text,
+                'docx',
+                format='md',
+                outputfile='output.docx',
+                extra_args=['--standalone']
+            )
+
+            # 读取转换后的文件内容，准备下载
+            with open('output.docx', 'rb') as f:
+                docx_file = f.read()
+
+            # 创建一个BytesIO流来存放docx文件
+            byte_io = BytesIO(docx_file)
+
             # 添加下载按钮
             timestamp = datetime.now()
-            file_name = f"Article_records_{timestamp}.txt"
+            file_name = f"{st.session_state['OutlineObj']['title']}_{timestamp}.docx"
+
+            # 设置streamlit下载按钮，允许用户下载文件
             st.download_button(
-                label="下载文章",
-                data=chat_text,
+                label='下载word文档',
+                data=byte_io,
                 file_name=file_name,
-                mime="text/plain"
-                )
+                mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
         
         else:
             if st.session_state['OutlineObj']:
-                st.write(st.session_state['OutlineObj'])
+                # st.write(st.session_state['OutlineObj'])
                 st.write("开始按照章节目录来进行内容的生成")
                 title = st.session_state['OutlineObj']["title"]
                 sections = st.session_state['OutlineObj']["sections"]
@@ -142,6 +168,7 @@ def run():
                         1. 基于<大纲>, 结合标题 {title} ,**仅对 {section} 部分进行扩写**，需要至少1000字的内容，输出的语言为{language}
                         1.1 **注意不需要输出章节的标题！！**
                         1.2 **注意不需要直接输出参考文献！！但需要在原文中利用角标进行参考文献的标注**
+                        1.3 **注意不要输出'现在我对这一段进行扩写'类似的字样**
                         2. 结合<注意事项>进行内容的输出
                         ## 大纲
                         {st.session_state['Outline']}
@@ -154,7 +181,8 @@ def run():
                         3. **图表或视觉元素**：
                             - 在需要进行插入视觉元素的地方进行标注
                         4. **参考文献**：
-                            - **不需要输出参考文献，但需要在原文中利用角标进行参考文献的标注**
+                            - **不需要输出参考文献，但需要在原文中利用角标`[x]`的格式进行参考文献的标注**
+                            - **不需要输出Footnotes这类的部分**
                         """
 
                         chat_completion = client.chat.completions.create(
@@ -176,7 +204,7 @@ def run():
                                 if content != None:
                                     messages.append(content)
                                     full_reply_content = ''.join([m for m in messages])
-                                    GPT_response.markdown(f"🤖: {full_reply_content}")
+                                    # GPT_response.markdown(f"🤖: {full_reply_content}")
 
                             st.session_state['sectionsList'].append(full_reply_content)                       
                 st.session_state['finished'] = True
